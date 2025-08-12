@@ -75,7 +75,11 @@ export default function SignupScreen() {
     setIsLoading(false);
 
     if (error) {
-      Alert.alert('Signup Failed', error);
+      if (error.includes('over_email_send_rate_limit')) {
+        Alert.alert('Too Many Attempts', 'Too many signup attempts. Please wait a minute and try again.');
+      } else {
+        Alert.alert('Signup Failed', error);
+      }
     } else {
       Alert.alert(
         'Success',
