@@ -97,19 +97,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authError) return { error: authError.message };
 
       if (authData.user) {
-        const { error: profileError } = await supabase
+        // Check if admin profile already exists
+        const { data: existingAdmin } = await supabase
           .from('admins')
-          .insert({
-            id: authData.user.id,
-            email: data.email,
-            full_name: data.fullName,
-            mobile_number: data.mobileNumber,
-            company_name: data.companyName,
-            role: 'super_admin',
-            is_active: true,
-          });
+          .select('id')
+          .eq('id', authData.user.id)
+          .single();
 
-        if (profileError) return { error: profileError.message };
+        // Only create profile if it doesn't exist
+        if (!existingAdmin) {
+          const { error: profileError } = await supabase
+            .from('admins')
+            .insert({
+              id: authData.user.id,
+              email: data.email,
+              full_name: data.fullName,
+              mobile_number: data.mobileNumber,
+              company_name: data.companyName,
+              role: 'super_admin',
+              is_active: true,
+            });
+
+          if (profileError) return { error: profileError.message };
+        }
       }
 
       return {};
