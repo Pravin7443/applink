@@ -119,6 +119,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
           if (profileError) return { error: profileError.message };
+        } else {
+          // If admin profile exists, update it with new information
+          const { error: updateError } = await supabase
+            .from('admins')
+            .update({
+              email: data.email,
+              full_name: data.fullName,
+              mobile_number: data.mobileNumber,
+              company_name: data.companyName,
+              is_active: true,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', authData.user.id);
+
+          if (updateError) return { error: updateError.message };
         }
       }
 
