@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { Admin } from '@/types/database';
 import { Session } from '@supabase/supabase-js';
 
@@ -97,8 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authError) return { error: authError.message };
 
       if (authData.user) {
-        // Use upsert to handle both creating new profiles and updating existing ones
-        const { error: profileError } = await supabase
+        // Use admin client for initial profile creation to bypass RLS
+        const { error: profileError } = await supabaseAdmin
           .from('admins')
           .upsert({
             id: authData.user.id,
