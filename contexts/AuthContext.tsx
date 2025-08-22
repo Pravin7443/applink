@@ -97,44 +97,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authError) return { error: authError.message };
 
       if (authData.user) {
-        // Check if admin profile already exists
-        const { data: existingAdmin } = await supabase
+        // Use upsert to handle both creating new profiles and updating existing ones
+        const { error: profileError } = await supabase
           .from('admins')
-          .select('id')
-          .eq('id', authData.user.id)
-          .single();
+          .upsert({
+            id: authData.user.id,
+            email: data.email,
+            full_name: data.fullName,
+            mobile_number: data.mobileNumber,
+            company_name: data.companyName,
+            role: 'super_admin',
+            is_active: true,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'id'
+          });
 
-        // Only create profile if it doesn't exist
-        if (!existingAdmin) {
-          const { error: profileError } = await supabase
-            .from('admins')
-            .insert({
-              id: authData.user.id,
-              email: data.email,
-              full_name: data.fullName,
-              mobile_number: data.mobileNumber,
-              company_name: data.companyName,
-              role: 'super_admin',
-              is_active: true,
-            });
-
-          if (profileError) return { error: profileError.message };
-        } else {
-          // If admin profile exists, update it with new information
-          const { error: updateError } = await supabase
-            .from('admins')
-            .update({
-              email: data.email,
-              full_name: data.fullName,
-              mobile_number: data.mobileNumber,
-              company_name: data.companyName,
-              is_active: true,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', authData.user.id);
-
-          if (updateError) return { error: updateError.message };
-        }
+        if (profileError) return { error: profileError.message };
       }
 
       return {};
